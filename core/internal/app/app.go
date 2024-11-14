@@ -1,6 +1,7 @@
 package app
 
 import (
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -9,13 +10,22 @@ import (
 	"os"
 	"time"
 
+	user_contracts "github.com/danecwalker/insight/core/internal/users/contracts"
+	"github.com/danecwalker/insight/core/internal/users/models"
+	user_repository "github.com/danecwalker/insight/core/internal/users/repository"
 	"github.com/golang-jwt/jwt/v5"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type App struct {
 	dataDir string
 	dbFile  string
+	db      *sql.DB
 	mux     *http.ServeMux
+
+	// userRepo contracts.UserRepository
+	userRepo user_contracts.UserRepository
 }
 
 func NewApp() *App {
@@ -58,7 +68,46 @@ func (a *App) Setup() {
 
 	slog.Info("Initializing database")
 
-	slog.Info("Creating tables")
+	db, err := sql.Open("sqlite3", a.dbFile)
+	if err != nil {
+		slog.Error("Failed to open database")
+		os.Exit(1)
+	}
+
+	a.db = db
+
+	a.userRepo = user_repository.NewSqliteUserRepository(a.db)
+
+	slog.Info("Creating user tables")
+	err = a.userRepo.CreateTable()
+	if err != nil {
+		slog.Error("Failed to create user tables")
+		os.Exit(1)
+	}
+
+	email := os.Getenv("DEFAULT_USER_EMAIL")
+	password := os.Getenv("DEFAULT_USER_PASSWORD")
+	if email == "" || password == "" {
+		slog.Error("No default user email or password set")
+		os.Exit(1)
+	}
+
+	user, err := a.userRepo.GetUserByEmail(email)
+	if err != nil {
+		slog.Error("Failed to get default user by email")
+		os.Exit(1)
+	}
+
+	if user.GetEmail() != "" {
+		slog.Info("Default user already exists")
+	} else {
+		slog.Info("Inserting default user")
+		err = a.userRepo.InsertUser(models.NewUser(email, password))
+		if err != nil {
+			slog.Error("Failed to insert default user")
+			os.Exit(1)
+		}
+	}
 
 	slog.Info("Database initialized")
 
