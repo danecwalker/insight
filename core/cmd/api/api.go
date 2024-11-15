@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
-	"github.com/danecwalker/insight/core/internal/store"
 	"github.com/fatih/color"
 	"github.com/felixge/httpsnoop"
-	"github.com/resend/resend-go/v2"
 )
 
 var cyan = color.New(color.FgCyan).SprintFunc()
@@ -18,9 +17,7 @@ var green = color.New(color.FgHiGreen).SprintFunc()
 var yellow = color.New(color.FgYellow).SprintFunc()
 
 type application struct {
-	config       config
-	store        *store.Storage
-	resendClient *resend.Client
+	config config
 }
 
 type config struct {
@@ -58,17 +55,6 @@ func prettyLog(next http.Handler) http.Handler {
 	})
 }
 
-func (app *application) mount() *http.ServeMux {
-	mux := http.NewServeMux()
-	v1 := http.NewServeMux()
-
-	mux.Handle("/api/v1/", prettyLog(http.StripPrefix("/api/v1", v1)))
-
-	v1.HandleFunc("/health", app.healthCheckHandler)
-
-	return mux
-}
-
 func (app *application) run(mux *http.ServeMux) error {
 	dataDir := app.config.data_dir
 	if dataDir == "" {
@@ -91,4 +77,17 @@ func (app *application) run(mux *http.ServeMux) error {
 
 	log.Printf("Starting server on %s", app.config.addr)
 	return svr.ListenAndServe()
+}
+
+func createDataDir(dataDir string) error {
+	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
+		log.Printf("Creating data directory at %s\n", dataDir)
+		if err := os.MkdirAll(dataDir, 0600); err != nil {
+			return err
+		}
+
+		return hideDir(dataDir)
+	}
+
+	return nil
 }
