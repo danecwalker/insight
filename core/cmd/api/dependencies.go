@@ -31,7 +31,7 @@ func SetupDependencies() Services {
 	services := Services{
 		UserService:  users.NewUserService(storage.Users),
 		MagicService: magic.NewMagicService(storage.Magic),
-		EmailService: email.NewEmailService(email.NewResendEmailClient(utils.GetEnvString("RESEND_API_KEY", ""))),
+		EmailService: email.NewEmailService(email.NewSMPTEmailClient("resend", "re_KtAaPF8w_CnbbGGGri17Kv6PrV8LS1EuM", "smtp.resend.com", 465)),
 	}
 
 	return services

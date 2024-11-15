@@ -1,24 +1,22 @@
 package email
 
-import "github.com/resend/resend-go/v2"
+import (
+	"fmt"
+	"net/smtp"
+)
 
-type resendEmailClient struct {
-	c *resend.Client
+type smptEmailClient struct {
+	c    smtp.Auth
+	host string
+	port int
 }
 
-func NewResendEmailClient(apiKey string) EmailClient {
-	client := resend.NewClient(apiKey)
-	return &resendEmailClient{c: client}
+func NewSMPTEmailClient(user, password, host string, port int) EmailClient {
+	auth := smtp.PlainAuth("", user, password, host)
+	return &smptEmailClient{c: auth, host: host, port: port}
 }
 
-func (e *resendEmailClient) SendEmail(email string, subject string, body string) error {
-	params := &resend.SendEmailRequest{
-		From:    "",
-		To:      []string{email},
-		Subject: subject,
-		Html:    body,
-		Text:    "",
-	}
-	_, err := e.c.Emails.Send(params)
+func (e *smptEmailClient) SendEmail(email string, subject string, body string) error {
+	err := smtp.SendMail(fmt.Sprintf("%s:%d", e.host, e.port), e.c, email, []string{email}, []byte("Subject: "+subject+"\r\n\r\n"+body))
 	return err
 }

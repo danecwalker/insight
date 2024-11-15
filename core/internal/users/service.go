@@ -6,7 +6,9 @@ type userService struct {
 
 // CreateUser implements UserService.
 func (u *userService) CreateUser(email string) (User, error) {
-	panic("unimplemented")
+	return User{
+		email: email,
+	}, nil
 }
 
 // DeleteUserByEmail implements UserService.

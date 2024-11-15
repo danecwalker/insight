@@ -6,7 +6,7 @@ type emailService struct {
 
 // SendEmail implements EmailService.
 func (e *emailService) SendEmail(email string, subject string, body string) error {
-	panic("unimplemented")
+	return e.c.SendEmail(email, subject, body)
 }
 
 // SendMagicLink implements EmailService.

@@ -30,7 +30,7 @@ func RegisterAuthHandler(mux *http.ServeMux, userService users.UserService, magi
 	}
 
 	// Register the auth handler
-	mux.HandleFunc("/auth/register", authHandler.Register)
+	mux.HandleFunc("POST /auth/register", authHandler.Register)
 }
 
 // Register implements the registration endpoint.
@@ -66,4 +66,6 @@ func (a *authHandler) Register(w http.ResponseWriter, r *http.Request) {
 		utils.WriteJson(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
+
+	utils.WriteJson(w, http.StatusOK, map[string]string{"message": "Magic link sent"})
 }
