@@ -1,4 +1,4 @@
-package user_repos
+package infrastructure
 
 import "database/sql"
 

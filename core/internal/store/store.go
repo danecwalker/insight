@@ -3,18 +3,18 @@ package store
 import (
 	"database/sql"
 
-	user_contracts "github.com/danecwalker/insight/core/internal/users/contracts"
-	user_repos "github.com/danecwalker/insight/core/internal/users/repos"
+	"github.com/danecwalker/insight/core/internal/magic"
+	"github.com/danecwalker/insight/core/internal/users"
+	"github.com/danecwalker/insight/core/internal/users/infrastructure"
 )
 
 type Storage struct {
-	Users user_contracts.UserStore
+	Users users.UserStore
+	Magic magic.MagicStore
 }
 
 func NewSqliteStorage(db *sql.DB) *Storage {
-	users := user_repos.NewSqliteUserStore(db)
-
-	users.CreateTables()
+	users := infrastructure.NewSqliteUserStore(db)
 
 	return &Storage{
 		Users: users,

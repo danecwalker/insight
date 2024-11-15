@@ -9,6 +9,7 @@ import (
 	"github.com/danecwalker/insight/core/internal/store"
 	"github.com/fatih/color"
 	"github.com/felixge/httpsnoop"
+	"github.com/resend/resend-go/v2"
 )
 
 var cyan = color.New(color.FgCyan).SprintFunc()
@@ -17,12 +18,14 @@ var green = color.New(color.FgHiGreen).SprintFunc()
 var yellow = color.New(color.FgYellow).SprintFunc()
 
 type application struct {
-	config config
-	store  *store.Storage
+	config       config
+	store        *store.Storage
+	resendClient *resend.Client
 }
 
 type config struct {
-	addr string
+	addr     string
+	data_dir string
 }
 
 func prettyBytes(n int64) string {
@@ -67,6 +70,16 @@ func (app *application) mount() *http.ServeMux {
 }
 
 func (app *application) run(mux *http.ServeMux) error {
+	dataDir := app.config.data_dir
+	if dataDir == "" {
+		dataDir = ".insight"
+	}
+
+	// Create the data directory if it doesn't exist
+	if err := createDataDir(dataDir); err != nil {
+		return err
+	}
+
 	// Start the HTTP server
 	svr := http.Server{
 		Addr:         app.config.addr,

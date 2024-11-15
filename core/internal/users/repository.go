@@ -1,4 +1,4 @@
-package user_contracts
+package users
 
 type UserStore interface {
 	CreateTables() error
